@@ -1,0 +1,12 @@
+{ // vscode不自动补全
+"editor.suggest.snippetsPreventQuickSuggestions": false,
+"editor.quickSuggestionsDelay": 100,
+"editor.quickSuggestions": null,
+"window.zoomLevel": 0,
+"terminal.integrated.rendererType": "dom",
+"files.associations": {
+  
+  "*.vue": "html"
+}
+// vscode不自动补全
+}
