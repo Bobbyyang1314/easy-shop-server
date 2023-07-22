@@ -58,11 +58,11 @@ mongoose.connect(process.env.CONNECTION_STRING, {
     })
 
 // server connect
+// app.listen(3000);
 
-app.listen(3000);
-
+// Production
 const server = app.listen(process.env.PORT || 3000, function () {
     const port = server.address().port;
-    console.log('Express is working on port' + port)
+    console.log("Express is working on port " + port);
 })
 
