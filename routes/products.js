@@ -74,7 +74,7 @@ router.post(`/`, uploadOptions.single('image'), async (req, res) => {
     if (!file) return res.status(400).send("File not found")
 
     // Corresponds with multer filename
-    const fileName = req.file.filename;
+    const fileName = file.filename;
     // Help to build URL
     const basePath = `${req.protocol}://${req.get('host')}/public/upload/`;
 
@@ -91,33 +91,33 @@ router.post(`/`, uploadOptions.single('image'), async (req, res) => {
         rating: req.body.rating,
         numReviews: req.body.numReviews,
         isFeatured: req.body.isFeatured
-    })
+    });
+
     product = await product.save();
     if (!product) return res.status(500).send("The product cannot be created");
     return res.status(200).send(product);
 })
 
 router.put('/:id', uploadOptions.single('image'), async (req, res) => {
-    // // Check if product && category is valid
-    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).send("Invalid product id");
-    if (!mongoose.isValidObjectId(req.body.category)) return res.status(400).send("Invalid category id");
-    // Bool for testing category
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).send('Invalid Product Id');
+    }
     const category = await Category.findById(req.body.category);
-    if (!category) return res.status(400).send("Category not found")
+    if (!category) return res.status(400).send('Invalid Category');
 
-    // Renewing updated image or keep the old one
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(400).send("Product not found");
+
+    if (!product) return res.status(400).send('Invalid Product!');
 
     const file = req.file;
     let imagepath;
-    // Check if image is updated or not
-    if(file) {
-        const fileName = req.file.filename;
-        const basePath = `${req.protocol}://${req.get('host')}/public/upload/`;
-        imagepath = `${basePath}${fileName}`
+
+    if (file) {
+        const fileName = file.filename;
+        const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`;
+        imagepath = `${basePath}${fileName}`;
     } else {
-        imagepath = product.iamge;
+        imagepath = product.image;
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -137,7 +137,7 @@ router.put('/:id', uploadOptions.single('image'), async (req, res) => {
         },
         // Console will show new category with id, else show the old category
         { new: true}
-    )
+    );
     if (!updatedProduct) return res.status(500).send("The product cannot be updated!");
     res.send(updatedProduct);
 })

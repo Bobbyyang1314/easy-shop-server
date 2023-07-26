@@ -85,7 +85,7 @@ router.put('/:id', async (req, res) => {
         // Console will show new order with id, else show the old order
         { new: true}
     )
-    if (!order) return res.status(400).send("The order connot be created");
+    if (!order) return res.status(400).send("The order cannot be created");
     res.send(order);
 })
 
