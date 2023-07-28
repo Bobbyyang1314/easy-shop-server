@@ -70,7 +70,7 @@ router.post('/', async (req, res) => {
     order = await order.save();
 
     // CHECK: tutorial says status(400)?
-    if (!order) return res.status(404).send("The order connot be created");
+    if (!order) return res.status(404).send("The order cannot be created");
     res.send(order);
 })
 

@@ -63,13 +63,18 @@ const productSchema = mongoose.Schema({
 })
 
 // Make frontend friendly by changing the _id to id
-productSchema.virtual('id').get(function () {
-    return this._id.toHexString();
-})
-productSchema.set('toJSON', {
-    virtuals: true
-})
+// productSchema.virtual('id').get(function () {
+//     return this._id.toHexString();
+// })
+// productSchema.set('toJSON', {
+//     virtuals: true
+// })
 
+productSchema.method('toJSON', function(){
+    const { __v, ...object } = this.toObject();
+    const { _id:id, ...result } = object;
+    return { ...result, id };
+});
 
 // Creating a model
 // Could also be used in other files
