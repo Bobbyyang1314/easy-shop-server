@@ -47,8 +47,7 @@ router.post('/', async (req, res) => {
     const totalPrices = await Promise.all(orderItemsIdsResolved.map(async (orderItemId) =>{
         const orderItem = await OrderItem.findById(orderItemId).populate('product', 'price');
         // Get total price of one item
-        const totalPrice = orderItem.product.price * orderItem.quantity;
-        return totalPrice
+        return orderItem.product.price * orderItem.quantity;
     }))
 
     const totalPrice = totalPrices.reduce((a,b) => a + b, 0);
@@ -70,7 +69,7 @@ router.post('/', async (req, res) => {
     order = await order.save();
 
     // CHECK: tutorial says status(400)?
-    if (!order) return res.status(404).send("The order cannot be created");
+    if (!order) return res.status(400).send("The order cannot be created");
     res.send(order);
 })
 
@@ -95,7 +94,7 @@ router.delete('/:id', async (req,res) => {
         .then(async order => {
             if (order) {
                 //Wait for all delete task to be done
-                await order.orderItems.map(async orderItem => {
+                order.orderItems.map(async orderItem => {
                     //Find every order-item and delete
                     await OrderItem.findByIdAndRemove(orderItem)
                     //May add .then to handle error
@@ -110,25 +109,26 @@ router.delete('/:id', async (req,res) => {
 });
 
 // api/v1/orders/get/totalsales
-router.get('/get/totalsales', async (req, res) => {
-    const totalSales = await Order.aggregate([
+router.get('/get/totalsales', async (req, res)=> {
+    const totalSales= await Order.aggregate([
         { $group: { _id: null , totalsales : { $sum : '$totalPrice'}}}
     ])
 
     if(!totalSales) {
-        return res.status(400).send('The order sales cannot be generated');
+        return res.status(400).send('The order sales cannot be generated')
     }
-    // Use pop() to get totalseles only
-    res.send({totalSales: totalSales.pop().totalsales})
+
+    res.send({totalsales: totalSales.pop().totalsales})
 })
 
 // Create api for counting the number of orders
 router.get(`/get/count`, async (req, res) => {
     // https://mongoosejs.com/docs/api/model.html#model_Model.find
     // Removed (count) => count in countDocuments()
-    const orderCount = await Order.countDocuments();
-    if (!orderCount) {
-        res.status(500).json({success: false});
+    const orderCount = await Order.countDocuments((count) => count)
+
+    if(!orderCount) {
+        res.status(500).json({success: false})
     }
     res.send({
         orderCount: orderCount
