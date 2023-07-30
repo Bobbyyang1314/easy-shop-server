@@ -29,6 +29,14 @@ router.get(`/:id`, async (req, res) =>{
 
 // Create order-item first and attach them to order request
 router.post('/', async (req, res) => {
+
+
+    console.log(typeof (req.body.OrderItems.quantity))
+    if (!req.body.orderItems || !Array.isArray(req.body.orderItems)) {
+        // If orderItems is not present or not an array, return an error response
+        return res.status(400).json({ success: false, message: "Invalid order items" });
+    }
+
     // Use Promise.all to return one resolved promise
     // Otherwise orderitems is empty
     const orderItemsIds  = Promise.all(req.body.orderItems.map(async (orderItem) =>{
