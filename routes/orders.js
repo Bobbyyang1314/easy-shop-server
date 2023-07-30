@@ -71,7 +71,7 @@ router.post('/', async (req, res) => {
     // CHECK: tutorial says status(400)?
     if (!order) return res.status(400).send("The order cannot be created");
     res.send(order);
-})
+});
 
 // api/v1/orders/{id}
 // For changing order status

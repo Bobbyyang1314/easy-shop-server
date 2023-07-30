@@ -14,8 +14,10 @@ function authJwt() {
     }).unless({
         path: [
             // Used to define routes for HTTP GET and OPTIONS methods that start with /api/v1/products.
-            {url: /\/api\/v1\/products(.*)/, method: ['GET', 'OPTIONS']},
-            {url: /\/api\/v1\/categories(.*)/, method: ['GET', 'OPTIONS']},
+            {url: /\/public\/uploads(.*)/ , methods: ['GET', 'OPTIONS'] },
+            {url: /\/api\/v1\/products(.*)/ , methods: ['GET', 'OPTIONS'] },
+            {url: /\/api\/v1\/categories(.*)/ , methods: ['GET', 'OPTIONS'] },
+            {url: /\/api\/v1\/orders(.*)/,methods: ['GET', 'OPTIONS', 'POST']},
             `${api}/users/login`,
             `${api}/users/register`
         ]
