@@ -54,7 +54,7 @@ router.get(`/:id`, async (req, res) => {
 });
 
 router.post(`/`, uploadOptions.single('image'), async (req, res) => {
-    const category = await Category.findById(req.body.category);
+    const category = await Category.findOne({name: req.body.category});
     if (!category) return res.status(400).send('Invalid Category');
 
     const file = req.body;
@@ -70,7 +70,7 @@ router.post(`/`, uploadOptions.single('image'), async (req, res) => {
         image: `${basePath}${fileName}`, // "http://localhost:3000/public/upload/image-2323232"
         brand: req.body.brand,
         price: req.body.price,
-        category: req.body.category,
+        category: category,
         countInStock: req.body.countInStock,
         rating: req.body.rating,
         numReviews: req.body.numReviews,
