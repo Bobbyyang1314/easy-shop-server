@@ -85,16 +85,29 @@ router.post(`/`, uploadOptions.single('image'), async (req, res) => {
 });
 
 router.put('/:id', uploadOptions.single('image'), async (req, res) => {
+    console.log("blue")
     if (!mongoose.isValidObjectId(req.params.id)) {
         return res.status(400).send('Invalid Product Id');
     }
-    const category = await Category.findById(req.body.category);
+    console.log("ss")
+    const c = req.body.category
+
+    console.log(c)
+    // const pas = JSON.parse(c)
+    // const userSchema = new mongoose.Schema(pas);
+    // console.log(typeof (pas))
+    // console.log(pas._id)
+    const category = await Category.findOne({ name: c });
+    console.log(typeof (req.body.category))
     if (!category) return res.status(400).send('Invalid Category');
 
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(400).send('Invalid Product!');
 
+    const product = await Product.findById(req.params.id.toString());
+    console.log("dd")
+    if (!product) return res.status(400).send('Invalid Product!');
+    console.log("bluffe")
     const file = req.file;
+    console.log("blugggge")
     let imagepath;
 
     if (file) {
@@ -104,7 +117,7 @@ router.put('/:id', uploadOptions.single('image'), async (req, res) => {
     } else {
         imagepath = product.image;
     }
-
+    console.log("passs")
     const updatedProduct = await Product.findByIdAndUpdate(
         req.params.id,
         {
@@ -114,7 +127,7 @@ router.put('/:id', uploadOptions.single('image'), async (req, res) => {
             image: imagepath,
             brand: req.body.brand,
             price: req.body.price,
-            category: req.body.category,
+            category: category,
             countInStock: req.body.countInStock,
             rating: req.body.rating,
             numReviews: req.body.numReviews,
