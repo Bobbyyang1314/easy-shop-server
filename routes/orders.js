@@ -1,6 +1,7 @@
 const {Order} = require('../models/order');
 const express = require('express');
 const { OrderItem } = require('../models/order-item');
+const {Product} = require("../models/product");
 const router = express.Router();
 
 router.get(`/`, async (req, res) =>{
@@ -28,58 +29,126 @@ router.get(`/:id`, async (req, res) =>{
 })
 
 // Create order-item first and attach them to order request
+// router.post('/', async (req, res) => {
+//
+//
+//     console.log(typeof (req.orderItems))
+//     if (!req.body.orderItems || !Array.isArray(req.body.orderItems)) {
+//         // If orderItems is not present or not an array, return an error response
+//         return res.status(400).json({ success: false, message: "Invalid order items" });
+//     }
+//
+//     // Use Promise.all to return one resolved promise
+//     // Otherwise orderitems is empty
+//     const orderItemsIds  = Promise.all(req.body.orderItems.map(async (orderItem) =>{
+//         let newOrderItem = new OrderItem({
+//             quantity: orderItem.quantity,
+//             product: orderItem.product
+//         })
+//
+//         newOrderItem = await newOrderItem.save();
+//         // Get the id in an array only
+//         return newOrderItem._id;
+//     }))
+//     const orderItemsIdsResolved = await orderItemsIds;
+//
+//     // Total price array
+//     const totalPrices = await Promise.all(orderItemsIdsResolved.map(async (orderItemId) =>{
+//         const orderItem = await OrderItem.findById(orderItemId).populate('product', 'price');
+//         // Get total price of one item
+//         return orderItem.product.price * orderItem.quantity;
+//     }))
+//
+//     const totalPrice = totalPrices.reduce((a,b) => a + b, 0);
+//
+//     let order = new Order({
+//         // Used to be orderItemsIds before resolving promise
+//         orderItems: orderItemsIdsResolved,
+//         shippingAddress1: req.body.shippingAddress1,
+//         shippingAddress2: req.body.shippingAddress2,
+//         city: req.body.city,
+//         zip: req.body.zip,
+//         country: req.body.country,
+//         phone: req.body.phone,
+//         status: req.body.status,
+//         // Calculate total price in backend
+//         totalPrice: totalPrice,
+//         user: req.body.user,
+//     })
+//     order = await order.save();
+//
+//     // CHECK: tutorial says status(400)?
+//     if (!order) return res.status(400).send("The order cannot be created");
+//     res.send(order);
+// });
 router.post('/', async (req, res) => {
-
-
-    console.log(typeof (req.body.OrderItems.quantity))
-    if (!req.body.orderItems || !Array.isArray(req.body.orderItems)) {
-        // If orderItems is not present or not an array, return an error response
+    // Check if the order items array is present and is valid
+    if (!req.body.orderItems || !Array.isArray(req.body.orderItems) || req.body.orderItems.length === 0) {
         return res.status(400).json({ success: false, message: "Invalid order items" });
     }
 
-    // Use Promise.all to return one resolved promise
-    // Otherwise orderitems is empty
-    const orderItemsIds  = Promise.all(req.body.orderItems.map(async (orderItem) =>{
-        let newOrderItem = new OrderItem({
-            quantity: orderItem.quantity,
-            product: orderItem.product
-        })
+    // Validate other required fields here (e.g., shippingAddress1, city, etc.)
+    // ...
 
-        newOrderItem = await newOrderItem.save();
-        // Get the id in an array only
-        return newOrderItem._id;
-    }))
-    const orderItemsIdsResolved = await orderItemsIds;
+    try {
+        // Process order items
+        const orderItemsIds = [];
+        for (const orderItem of req.body.orderItems) {
+            try {
+                console.log(orderItem)
+                const product = await Product.findOne({id: orderItem.id});
 
-    // Total price array
-    const totalPrices = await Promise.all(orderItemsIdsResolved.map(async (orderItemId) =>{
-        const orderItem = await OrderItem.findById(orderItemId).populate('product', 'price');
-        // Get total price of one item
-        return orderItem.product.price * orderItem.quantity;
-    }))
+                // console.log(product[0])
 
-    const totalPrice = totalPrices.reduce((a,b) => a + b, 0);
+                let newOrderItem = new OrderItem({
+                    quantity: orderItem.quantity,
+                    product: product
+                });
+                console.log("==============================");
+                console.log(newOrderItem);
+                console.log("==============================");
+                newOrderItem = await newOrderItem.save();
+                orderItemsIds.push(newOrderItem._id);
+            } catch (error) {
+                console.error("Error saving order item:", error);
+            }
+        }
+        // console.log("finifsh")
+        // Calculate total price
+        const totalPrices = await Promise.all(orderItemsIds.map(async (orderItemId) => {
+            const orderItem = await OrderItem.findById(orderItemId).populate('product', 'price');
+            return orderItem.product.price * orderItem.quantity;
+        }));
 
-    let order = new Order({
-        // Used to be orderItemsIds before resolving promise
-        orderItems: orderItemsIdsResolved,
-        shippingAddress1: req.body.shippingAddress1,
-        shippingAddress2: req.body.shippingAddress2,
-        city: req.body.city,
-        zip: req.body.zip,
-        country: req.body.country,
-        phone: req.body.phone,
-        status: req.body.status,
-        // Calculate total price in backend
-        totalPrice: totalPrice,
-        user: req.body.user,
-    })
-    order = await order.save();
+        const totalPrice = totalPrices.reduce((a, b) => a + b, 0);
+        console.log(totalPrice)
+        // Create and save the order
+        let order = new Order({
+            orderItems: orderItemsIds,
+            shippingAddress1: req.body.shippingAddress1,
+            shippingAddress2: req.body.shippingAddress2,
+            city: req.body.city,
+            zip: req.body.zip,
+            country: req.body.country,
+            phone: req.body.phone,
+            status: req.body.status,
+            totalPrice: totalPrice,
+            user: req.body.user,
+        });
+        order = await order.save();
 
-    // CHECK: tutorial says status(400)?
-    if (!order) return res.status(400).send("The order cannot be created");
-    res.send(order);
+        if (!order) {
+            return res.status(400).json({ success: false, message: "The order cannot be created" });
+        }
+
+        // Send the successful response with status code 201
+        res.status(201).json({ success: true, order: order });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Something went wrong. Please try again later." });
+    }
 });
+
 
 // api/v1/orders/{id}
 // For changing order status
