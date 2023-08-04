@@ -136,6 +136,7 @@ router.post('/', async (req, res) => {
             user: req.body.user,
         });
         order = await order.save();
+        console.log(order.user)
 
         if (!order) {
             return res.status(400).json({ success: false, message: "The order cannot be created" });
